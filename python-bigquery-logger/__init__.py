@@ -1,60 +1,87 @@
+import httplib2
+from apiclient.discovery import build
+import core
 import logging
-import requests
-import json
+import datetime
+from google_api_client import core
+import time
+import logging
 
-class SlackError(Exception):
+
+BIGQUERY_SCOPE = 'https://www.googleapis.com/auth/bigquery'
+BIGQUERY_SESSION = 'bigquery'
+
+def get_service():
+    global http, service
+    if service is None:
+        http = core.build_http(BIGQUERY_SCOPE, BIGQUERY_SESSION)
+        service = build('bigquery', 'v2', http=http)
+        return service
+    else:
+        return service
+
+
+class BigQueryError(Exception):
     pass
 
 
-class SlackClient(object):
+class BigQueryClient(object):
 
-    BASE_URL = 'https://hooks.slack.com/services/'
+    def __init__(self, project_id, dataset_id, table_id):
+        self.project_id = project_id
+        self.dataset_id = dataset_id
+        self.table_id = table_id
 
-    def __init__(self, token):
-        self.token = token
-
-    def _make_request(self, method, params):
+    def _make_request(self, method, body):
         """Make request to API endpoint
 
         Note: Ignoring SSL cert validation due to intermittent failures
         http://requests.readthedocs.org/en/latest/user/advanced/#ssl-cert-verification
         """
-        url = "%s/%s" % (SlackClient.BASE_URL, self.token)
-        result = requests.post(url, data={"payload": json.dumps(params)}, verify=False)
-        # if not result['ok']:
-        #     raise SlackError(result['error'])
+        service = get_service()
+        tabledata = service.tabledata()
+        result = tabledata.insertAll(
+            projectId=self.project_id,
+            datasetId=self.dataset_id,
+            tableId=self.table_id,
+            body=body
+        ).execute()
+
         return result
 
-    def chat_post_message(self, channel, text, **params):
-        """chat.postMessage
+    def insertall_message(self, text, **params):
+        """tabledata().insertAll()
 
-        This method posts a message to a channel.
+        This method insert a message into BigQuery
 
         Check docs for all available **params options:
-        https://api.slack.com/methods/chat.postMessage
+        https://cloud.google.com/bigquery/docs/reference/v2/tabledata/insertAll
         """
-        method = 'chat.postMessage'
-        params.update({
-            'channel': channel,
-            'text': text,
-        })
-        return self._make_request(method, params)
+        method = 'tabledata().insertAll()'
 
+        if 'rows' in params:
+            params['rows'][0].update({
+                'json': {'text': text},
+            })
+        else:
+            params['rows'] = [{
+                'json': {'text': text},
+            }]
 
-class SlackHandler(logging.Handler):
-    """A logging handler that posts messages to a Slack channel!
+        body = params
+        return self._make_request(method, body)
+
+class BigQueryHandler(logging.Handler):
+    """A logging handler that posts messages to a BigQuery channel!
 
     References:
     http://docs.python.org/2/library/logging.html#handler-objects
     """
-    def __init__(self, token, channel, **kwargs):
-        super(SlackHandler, self).__init__()
-        self.client = SlackClient(token)
-        self.channel = channel
+    def __init__(self, project_id, dataset_id, table_id, **kwargs):
+        super(BigQueryHandler, self).__init__()
+        self.client = BigQueryClient(project_id, dataset_id, table_id)
         self._kwargs = kwargs
 
     def emit(self, record):
         message = self.format(record)
-        self.client.chat_post_message(self.channel,
-                                      message,
-                                      **self._kwargs)
+        self.client.insertall_message(message, **self._kwargs)

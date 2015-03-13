@@ -28,8 +28,8 @@ class TestBigqueryLogger(unittest.TestCase):
             "kind": "my#tableDataInsertAllResponse",
         }
 
-        real = BigQueryHandler(self.mock_service, self.project_id)
-        response = real.emit(self.dataset_id, self.table_id, self.record)
+        real = BigQueryHandler(self.mock_service, self.project_id, self.dataset_id, self.table_id)
+        response = real.emit(self.record)
 
         self.assertEqual(response, {"kind": "my#tableDataInsertAllResponse"})
         self.mock_service.tabledata.assert_called_with()

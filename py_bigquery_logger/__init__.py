@@ -6,27 +6,26 @@ class BigQueryError(Exception):
 
 class BigQueryClient(object):
 
-    def __init__(self, service, project_id):
+    def __init__(self, service, project_id, dataset_id, table_id):
         self.service = service
         self.project_id = project_id
+        self.dataset_id = dataset_id
+        self.table_id = table_id
 
-    def _make_request(self, method, dataset_id, table_id, body):
+    def _make_request(self, method, body):
         """Make request to API endpoint
-
-        Note: Ignoring SSL cert validation due to intermittent failures
-        http://requests.readthedocs.org/en/latest/user/advanced/#ssl-cert-verification
         """
         tabledata = self.service.tabledata()
         response = tabledata.insertAll(
             projectId=self.project_id,
-            datasetId=dataset_id,
-            tableId=table_id,
+            datasetId=self.dataset_id,
+            tableId=self.table_id,
             body=body
         ).execute()
 
         return response
 
-    def insertall_message(self, dataset_id, table_id, text):
+    def insertall_message(self, text):
         """tabledata().insertAll()
 
         This method insert a message into BigQuery
@@ -42,7 +41,7 @@ class BigQueryClient(object):
         }]
 
         body["kind"] = "bigquery#tableDataInsertAllRequest"
-        return self._make_request(method, dataset_id, table_id, body)
+        return self._make_request(method, body)
 
 class BigQueryHandler(logging.Handler):
     """A logging handler that posts messages to a BigQuery channel!
@@ -50,16 +49,16 @@ class BigQueryHandler(logging.Handler):
     References:
     http://docs.python.org/2/library/logging.html#handler-objects
     """
-    def __init__(self, service, project_id):
+    def __init__(self, service, project_id, dataset_id, table_id):
         super(BigQueryHandler, self).__init__()
-        self.client = BigQueryClient(service, project_id)
+        self.client = BigQueryClient(service, project_id, dataset_id, table_id)
 
-    def emit(self, dataset_id, table_id, record):
+    def emit(self, record):
         try:
             # error when type(record) == str
             message = self.format(record)
         except:
             message = record
 
-        return self.client.insertall_message(dataset_id, table_id, message)
+        return self.client.insertall_message(message)
 

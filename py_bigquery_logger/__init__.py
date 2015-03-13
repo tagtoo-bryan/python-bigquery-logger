@@ -1,10 +1,3 @@
-#import httplib2
-#from apiclient.discovery import build
-#import core
-import logging
-import datetime
-#from google_api_client import core
-import time
 import logging
 
 class BigQueryError(Exception):

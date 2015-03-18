@@ -46,22 +46,28 @@ class BigQueryClient(object):
         """
         return self.insertall([{'logging': text}])
 
-class BigQueryHandler(logging.Handler):
+
+class BigQueryHandler(logging.BufferingHandler):
     """A logging handler that posts messages to a BigQuery channel!
 
     References:
     http://docs.python.org/2/library/logging.html#handler-objects
     """
-    def __init__(self, service, project_id, dataset_id, table_id):
-        super(BigQueryHandler, self).__init__()
+
+    def __init__(self, service, project_id, dataset_id, table_id, capacity=200):
+        super(BigQueryHandler, self).__init__(capacity)
         self.client = BigQueryClient(service, project_id, dataset_id, table_id)
 
-    def emit(self, record):
+
+    def flush(self):
+        """
+        Override to implement custom flushing behaviour.
+
+        This version just zaps the buffer to empty.
+        """
+        self.acquire()
         try:
-            # error when type(record) == str
-            message = self.format(record)
-        except:
-            message = record
-
-        return self.client.insertall_message(message)
-
+            self.client.insertall(k.__dict__ for k in self.buffer)
+            self.buffer = []
+        finally:
+            self.release()

@@ -1,5 +1,6 @@
 import logging
 from logging.handlers import BufferingHandler
+import traceback
 
 class BigQueryError(Exception):
     pass
@@ -31,7 +32,6 @@ class BigQueryClient(object):
         This method insert rows into BigQuery
         """
         method = 'tabledata().insertAll().execute()'
-
         body = {}
         body['rows'] = [{'json': row} for row in rows]
         body["kind"] = "bigquery#tableDataInsertAllRequest"
@@ -59,6 +59,18 @@ class BigQueryHandler(BufferingHandler):
         super(BigQueryHandler, self).__init__(capacity)
         self.client = BigQueryClient(service, project_id, dataset_id, table_id)
 
+    fields = {'created', 'filename', 'funcName', 'levelname', 'levelno', 'module', 'name', 'pathname', 'process', 'processName', 'relativeCreated', 'thread', 'threadName'}
+
+    def mapLogRecord(self, record):
+        temp = { key: getattr(record, key) for key in self.fields }
+        if record.exc_info:
+            temp["exc_info"] = {
+                "type": unicode(record.exc_info[0]),
+                "value": unicode(record.exc_info[1])
+            }
+
+        temp["message"] = self.format(record)
+        return temp
 
     def flush(self):
         """
@@ -68,7 +80,8 @@ class BigQueryHandler(BufferingHandler):
         """
         self.acquire()
         try:
-            self.client.insertall(k.__dict__ for k in self.buffer)
+            if self.buffer:
+                self.client.insertall(self.mapLogRecord(k) for k in self.buffer)
             self.buffer = []
         finally:
             self.release()

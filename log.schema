@@ -1,0 +1,22 @@
+[
+  {"type": "timestamp", "name": "created"},
+  {"type": "record", "name": "exc_info", "fields": [
+    {"type": "string", "name": "type"},
+    {"type": "string", "name": "value"},
+    {"type": "string", "name": "traceback"}
+  ]},
+  {"type": "string", "name": "filename"},
+  {"type": "string", "name": "funcName"},
+  {"type": "string", "name": "levelname"},
+  {"type": "integer", "name": "levelno"},
+  {"type": "integer", "name": "lineno"},
+  {"type": "string", "name": "module"},
+  {"type": "string", "name": "name"},
+  {"type": "string", "name": "pathname"},
+  {"type": "integer", "name": "process"},
+  {"type": "string", "name": "processName"},
+  {"type": "float", "name": "relativeCreated"},
+  {"type": "integer", "name": "thread"},
+  {"type": "string", "name": "threadName"},
+  {"type": "string", "name": "message"}
+]

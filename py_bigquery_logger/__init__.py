@@ -44,7 +44,7 @@ class BigQueryClient(object):
         Check docs for all available **params options:
         https://cloud.google.com/bigquery/docs/reference/v2/tabledata/insertAll
         """
-        return self.insertall([{'logging': text}}])
+        return self.insertall([{'logging': text}])
 
 class BigQueryHandler(logging.Handler):
     """A logging handler that posts messages to a BigQuery channel!

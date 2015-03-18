@@ -1,4 +1,6 @@
 [
+  {"type": "string", "name": "client"},
+  {"type": "string", "name": "tags", "mode": "repeated"},
   {"type": "timestamp", "name": "created"},
   {"type": "record", "name": "exc_info", "fields": [
     {"type": "string", "name": "type"},

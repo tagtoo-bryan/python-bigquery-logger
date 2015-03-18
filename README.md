@@ -19,7 +19,7 @@ Post a message into your BigQuery table specified with project ID, dataset ID, t
     { "kind": "bigquery#tableDataInsertAllResponse", "insertErrors": [] }
 
 
-Integrate a SlackHandler into your logging!
+Integrate a BigQueryHandler into your logging!
 
     >>> import logging
     >>> from py_bigquery_logger import BigQueryHandler
@@ -31,7 +31,7 @@ Integrate a SlackHandler into your logging!
     >>> logger = logging.getLogger('test')
     >>> logger.setLevel(logging.DEBUG)
     
-    >>> handler = SlackHandler(service, 'project ID', 'dataset ID', 'table ID')
+    >>> handler = BigQueryHandler(service, 'project ID', 'dataset ID', 'table ID')
     >>> handler.setLevel(logging.WARNING)
     >>> formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s (%(process)d): %(message)s')
     >>> handler.setFormatter(formatter)

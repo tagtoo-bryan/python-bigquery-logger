@@ -1,4 +1,6 @@
 import logging
+from logging.handlers import BufferingHandler
+import traceback
 
 class BigQueryError(Exception):
     pass
@@ -30,7 +32,6 @@ class BigQueryClient(object):
         This method insert rows into BigQuery
         """
         method = 'tabledata().insertAll().execute()'
-
         body = {}
         body['rows'] = [{'json': row} for row in rows]
         body["kind"] = "bigquery#tableDataInsertAllRequest"
@@ -46,22 +47,41 @@ class BigQueryClient(object):
         """
         return self.insertall([{'logging': text}])
 
-class BigQueryHandler(logging.Handler):
+
+class BigQueryHandler(BufferingHandler):
     """A logging handler that posts messages to a BigQuery channel!
 
     References:
     http://docs.python.org/2/library/logging.html#handler-objects
     """
-    def __init__(self, service, project_id, dataset_id, table_id):
-        super(BigQueryHandler, self).__init__()
+
+    def __init__(self, service, project_id, dataset_id, table_id, capacity=200):
+        super(BigQueryHandler, self).__init__(capacity)
         self.client = BigQueryClient(service, project_id, dataset_id, table_id)
 
-    def emit(self, record):
+    fields = {'created', 'filename', 'funcName', 'levelname', 'levelno', 'module', 'name', 'pathname', 'process', 'processName', 'relativeCreated', 'thread', 'threadName'}
+
+    def mapLogRecord(self, record):
+        temp = { key: getattr(record, key) for key in self.fields }
+        if record.exc_info:
+            temp["exc_info"] = {
+                "type": unicode(record.exc_info[0]),
+                "value": unicode(record.exc_info[1])
+            }
+
+        temp["message"] = self.format(record)
+        return temp
+
+    def flush(self):
+        """
+        Override to implement custom flushing behaviour.
+
+        This version just zaps the buffer to empty.
+        """
+        self.acquire()
         try:
-            # error when type(record) == str
-            message = self.format(record)
-        except:
-            message = record
-
-        return self.client.insertall_message(message)
-
+            if self.buffer:
+                self.client.insertall(self.mapLogRecord(k) for k in self.buffer)
+            self.buffer = []
+        finally:
+            self.release()

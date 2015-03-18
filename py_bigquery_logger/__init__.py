@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import BufferingHandler
 
 class BigQueryError(Exception):
     pass
@@ -47,7 +48,7 @@ class BigQueryClient(object):
         return self.insertall([{'logging': text}])
 
 
-class BigQueryHandler(logging.BufferingHandler):
+class BigQueryHandler(BufferingHandler):
     """A logging handler that posts messages to a BigQuery channel!
 
     References:

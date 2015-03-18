@@ -25,6 +25,17 @@ class BigQueryClient(object):
 
         return response
 
+    def insertall(self, rows):
+        """
+        This method insert rows into BigQuery
+        """
+        method = 'tabledata().insertAll().execute()'
+
+        body = {}
+        body['rows'] = [{'json': row} for row in rows]
+        body["kind"] = "bigquery#tableDataInsertAllRequest"
+        return self._make_request(method, body)
+
     def insertall_message(self, text):
         """tabledata().insertAll()
 
@@ -33,15 +44,7 @@ class BigQueryClient(object):
         Check docs for all available **params options:
         https://cloud.google.com/bigquery/docs/reference/v2/tabledata/insertAll
         """
-        method = 'tabledata().insertAll().execute()'
-
-        body = {}
-        body['rows'] = [{
-            'json': {'logging': text},
-        }]
-
-        body["kind"] = "bigquery#tableDataInsertAllRequest"
-        return self._make_request(method, body)
+        return self.insertall([{'logging': text}])
 
 class BigQueryHandler(logging.Handler):
     """A logging handler that posts messages to a BigQuery channel!

@@ -1,6 +1,6 @@
 import unittest
 from mock import *
-from py_bigquery_logger import BigQueryClient, BigQueryHandler
+from bigquery_logger import BigQueryClient, BigQueryHandler
 
 class TestBigqueryLogger(unittest.TestCase):
 

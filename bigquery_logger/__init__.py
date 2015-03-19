@@ -54,9 +54,10 @@ class BigQueryHandler(BufferingHandler):
     http://docs.python.org/2/library/logging.html#handler-objects
     """
 
-    def __init__(self, service, project_id, dataset_id, table_id, capacity=200):
+    def __init__(self, name, service, project_id, dataset_id, table_id, capacity=200):
         super(BigQueryHandler, self).__init__(capacity)
         self.client = BigQueryClient(service, project_id, dataset_id, table_id)
+        self.name = name
 
     fields = {'created', 'filename', 'funcName', 'levelname', 'levelno', 'module', 'name', 'pathname', 'process', 'processName', 'relativeCreated', 'thread', 'threadName'}
 
@@ -68,6 +69,10 @@ class BigQueryHandler(BufferingHandler):
                 "value": unicode(record.exc_info[1])
             }
 
+        if hasattr(record, 'tags'):
+            temp["tags"] = [unicode(k) for k in record.tags]
+
+        temp["client"] = self.name
         temp["message"] = self.format(record)
         return temp
 

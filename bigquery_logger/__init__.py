@@ -62,14 +62,13 @@ class BigQueryHandler(BufferingHandler):
     http://docs.python.org/2/library/logging.html#handler-objects
     """
 
-    def __init__(self, name, service, project_id, dataset_id, table_id, capacity=200):
+    def __init__(self, service, project_id, dataset_id, table_id, capacity=200):
         super(BigQueryHandler, self).__init__(capacity)
 
         if service == "default":
             service = get_default_service()
 
         self.client = BigQueryClient(service, project_id, dataset_id, table_id)
-        self.name = name
 
     fields = {'created', 'filename', 'funcName', 'levelname', 'levelno', 'module', 'name', 'pathname', 'process', 'processName', 'relativeCreated', 'thread', 'threadName'}
 
@@ -99,5 +98,7 @@ class BigQueryHandler(BufferingHandler):
             if self.buffer:
                 self.client.insertall(self.mapLogRecord(k) for k in self.buffer)
             self.buffer = []
+        except Exception as e:
+            pass
         finally:
             self.release()

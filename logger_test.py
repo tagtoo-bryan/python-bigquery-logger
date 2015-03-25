@@ -46,17 +46,16 @@ class TestBigqueryLogger(unittest.TestCase):
             self.table_id
         )
         handler.handle(record)
-        handler.flush()
+        response = handler.flush()
 
-        # this part need to rewrite
-        # # self.assertEqual(response, {"kind": "my#tableDataInsertAllResponse"})
-        # self.mock_service.tabledata.assert_called_with()
-        # self.mock_tabledata.insertAll.assert_called_with(
-        #     projectId = self.project_id,
-        #     datasetId = self.dataset_id,
-        #     tableId = self.table_id,
-        #     body = self.body
-        # )
+        self.assertEqual(response, {"kind": "my#tableDataInsertAllResponse"})
+        self.mock_service.tabledata.assert_called_with()
+        self.mock_tabledata.insertAll.assert_called_with(
+            projectId = self.project_id,
+            datasetId = self.dataset_id,
+            tableId = self.table_id,
+            body = self.body
+        )
 
 if __name__ == '__main__':
     unittest.main()

@@ -83,10 +83,13 @@ class BigQueryHandler(BufferingHandler):
 
         This version just zaps the buffer to empty.
         """
+        response = None
         self.acquire()
         try:
             if self.buffer:
-                self.client.insertall(self.mapLogRecord(k) for k in self.buffer)
+                response = self.client.insertall(self.mapLogRecord(k) for k in self.buffer)
+                
             self.buffer = []
         finally:
             self.release()
+            return response

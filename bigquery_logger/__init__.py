@@ -1,9 +1,5 @@
 import logging
 from logging.handlers import BufferingHandler
-import traceback
-
-class BigQueryError(Exception):
-    pass
 
 
 class BigQueryClient(object):
@@ -48,6 +44,17 @@ class BigQueryClient(object):
         return self.insertall([{'logging': text}])
 
 
+def get_default_service():
+    from oauth2client import client
+    from apiclient.discovery import build
+    import httplib2
+
+    credentials = client.GoogleCredentials.get_application_default()
+    http = credentials.authorize(httplib2.Http())
+    service = build('bigquery', 'v2', http=http)
+
+    return service
+
 class BigQueryHandler(BufferingHandler):
     """A logging handler that posts messages to a BigQuery channel!
 
@@ -55,10 +62,13 @@ class BigQueryHandler(BufferingHandler):
     http://docs.python.org/2/library/logging.html#handler-objects
     """
 
-    def __init__(self, name, service, project_id, dataset_id, table_id, capacity=200):
+    def __init__(self, service, project_id, dataset_id, table_id, capacity=200):
         super(BigQueryHandler, self).__init__(capacity)
+
+        if service == "default":
+            service = get_default_service()
+
         self.client = BigQueryClient(service, project_id, dataset_id, table_id)
-        self.name = name
 
     fields = {'created', 'filename', 'funcName', 'levelname', 'levelno', 'module', 'name', 'pathname', 'process', 'processName', 'relativeCreated', 'thread', 'threadName'}
 
@@ -88,5 +98,7 @@ class BigQueryHandler(BufferingHandler):
             if self.buffer:
                 self.client.insertall(self.mapLogRecord(k) for k in self.buffer)
             self.buffer = []
+        except Exception as e:
+            pass
         finally:
             self.release()
